@@ -15,6 +15,7 @@ Flask-Minify==0.37
 Flask-Dance==5.1.0
 blinker==1.4
 pyOpenSSL
+pymysql
 
 # flask_mysqldb
 # psycopg2-binary

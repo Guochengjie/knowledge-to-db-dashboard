@@ -5,20 +5,17 @@ FLASK_APP=run.py
 FLASK_ENV=development
 
 # If not provided, a random one is generated 
-# SECRET_KEY=<YOUR_SUPER_KEY_HERE>
+SECRET_KEY=5QemJmSkqzqhxA9kcKYG
 
 # If DB credentials (if NOT provided, or wrong values SQLite is used) 
-# DB_ENGINE=mysql
-# DB_HOST=localhost
-# DB_NAME=appseed_db
-# DB_USERNAME=appseed_db_usr
-# DB_PASS=pass
-# DB_PORT=3306
+DB_ENGINE=mysql+pymysql
+DB_HOST=dev.guoch.xyz
+DB_NAME=kn-db-dashboard
+DB_PASS=Gxbje3eRfaERfdYP
+DB_PORT=3306
+DB_USERNAME=kn-db-dashboard
 
 # Used for CDN (in production)
 # No Slash at the end
 ASSETS_ROOT=/static/assets
 
-# SOCIAL AUTH Github
-# GITHUB_ID=YOUR_GITHUB_ID
-# GITHUB_SECRET=YOUR_GITHUB_SECRET

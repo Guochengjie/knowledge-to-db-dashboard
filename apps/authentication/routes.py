@@ -19,21 +19,13 @@ from apps.authentication.models import Users
 
 from apps.authentication.util import verify_pass
 
+
 @blueprint.route('/')
 def route_default():
     return redirect(url_for('authentication_blueprint.login'))
 
+
 # Login & Registration
-
-@blueprint.route("/github")
-def login_github():
-    """ Github login """
-    if not github.authorized:
-        return redirect(url_for("github.login"))
-
-    res = github.get("/user")
-    return redirect(url_for('home_blueprint.index'))
-
 @blueprint.route('/login', methods=['GET', 'POST'])
 def login():
     login_form = LoginForm(request.form)
@@ -43,13 +35,15 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
+        remember = True if request.form.get('remember_me') else False
+
         # Locate user
         user = Users.query.filter_by(username=username).first()
 
         # Check the password
         if user and verify_pass(password, user.password):
 
-            login_user(user)
+            login_user(user, remember)
             return redirect(url_for('authentication_blueprint.route_default'))
 
         # Something (user or pass) is not ok
