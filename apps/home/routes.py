@@ -91,8 +91,7 @@ def task_detail(task_uuid):
 @blueprint.route('/task')
 @login_required
 def task():
-    # TODO: create new template for task list
-    return render_template('home/dashboard.html', segment='tasks')
+    return render_template('home/task-list.html', segment='tasks')
 
 
 @blueprint.route('/api/task/delete/<task_uuid>')
@@ -573,7 +572,7 @@ def get_sql_query(task_uuid):
         relation_dict = json.load(f_relation)
         entity_comment_dict = json.load(f_comment)
         relation_comment_dict = json.load(f_relation_comment)
-        create_tables = ["\n-- Entity Tables:"]
+        create_tables = ["-- Entity Tables:"]
         create_tables += knowledge2db.sql_generator.create_table_by_category(entity_dict, entity_comment_dict,
                                                                              custom_column_type=custom_attr_type)
         create_tables.append("\n-- Relation Tables:")
