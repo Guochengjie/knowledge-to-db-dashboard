@@ -251,4 +251,4 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-apps/uploads/*
+/apps/uploads/*
