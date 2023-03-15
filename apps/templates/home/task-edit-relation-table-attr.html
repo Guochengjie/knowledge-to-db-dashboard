@@ -121,12 +121,15 @@
                         <input class="form-control" id="dataTypeOld" disabled>
                     </div>
                     <div class="mb-3">
-                        <label for="dataType" class="form-label">Data Type</label>
+                        <label for="dataType" class="form-label">New Data Type</label>
                         <input class="form-control" id="dataType">
                         <div id="pillDataList" class="mt-1">
                             <button type="button" class="type-btn badge bg-info" data-type="INT">INT</button>
-                            <button type="button" class="type-btn badge bg-info" data-type="VARCHAR(36)">VARCHAR(36) (for UUID)</button>
-                            <button type="button" class="type-btn badge bg-info" data-type="VARCHAR(32)">VARCHAR(32)</button>
+                            <button type="button" class="type-btn badge bg-info" data-type="VARCHAR(36)">VARCHAR(36)
+                                (for UUID)
+                            </button>
+                            <button type="button" class="type-btn badge bg-info" data-type="VARCHAR(32)">VARCHAR(32)
+                            </button>
                             <button type="button" class="type-btn badge bg-info" data-type="DATE">DATE</button>
                             <button type="button" class="type-btn badge bg-info" data-type="DATETIME">DATETIME</button>
                             <button type="button" class="type-btn badge bg-info" data-type="BINARY">BINARY</button>
@@ -140,14 +143,30 @@
                         <label for="constraints" class="form-label">Constraints</label>
                         <input class="form-control" id="constraints">
                         <div class="mt-1">
-                            <button type="button" class="constraint-btn badge bg-info" data-constraint=""><i class="fa fa-times" aria-hidden="true"></i></button>
-                            <button type="button" class="constraint-btn badge bg-info" data-constraint="NOT NULL">NOT NULL</button>
-                            <button type="button" class="constraint-btn badge bg-info" data-constraint="DEFAULT 'value'">DEFAULT 'value' (change the 'value' here)</button>
-                            <button type="button" class="constraint-btn badge bg-info" data-constraint="DEFAULT uuid()">DEFAULT uuid()</button>
-                            <button type="button" class="constraint-btn badge bg-info" data-constraint="DEFAULT CURRENT_TIMESTAMP">DEFAULT CURRENT_TIMESTAMP</button>
-                            <button type="button" class="constraint-btn badge bg-info" data-constraint="PRIMARY KEY">PRIMARY KEY</button>
-                            <button type="button" class="constraint-btn badge bg-info" data-constraint="UNIQUE">UNIQUE</button>
+                            <button type="button" class="constraint-btn badge bg-info" data-constraint=""><i
+                                    class="fa fa-times" aria-hidden="true"></i></button>
+                            <button type="button" class="constraint-btn badge bg-info" data-constraint="NOT NULL">NOT
+                                NULL
+                            </button>
+                            <button type="button" class="constraint-btn badge bg-info"
+                                    data-constraint="DEFAULT 'value'">DEFAULT 'value' (change the 'value' here)
+                            </button>
+                            <button type="button" class="constraint-btn badge bg-info" data-constraint="DEFAULT uuid()">
+                                DEFAULT uuid()
+                            </button>
+                            <button type="button" class="constraint-btn badge bg-info"
+                                    data-constraint="DEFAULT CURRENT_TIMESTAMP">DEFAULT CURRENT_TIMESTAMP
+                            </button>
                         </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="special-constraint" class="form-label">Special Constraint (index)</label>
+                        <select class="form-select" id="special-constraint">
+                            <option value="" selected="">-</option>
+                            <option value="UNIQUE">UNIQUE</option>
+                            <option value="INDEX">INDEX</option>
+                            <option value="FULLTEXT">FULLTEXT</option>
+                        </select>
                     </div>
                     <div class="mb-3">
                         <label for="comment" class="form-label">Comment</label>

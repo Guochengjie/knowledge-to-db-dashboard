@@ -13,6 +13,7 @@ class Task(db.Model):
     db_name = db.Column(db.String(30))
     table_prefix = db.Column(db.String(10))
     custom_attr_type = db.Column(db.Text)
+    custom_index = db.Column(db.Text)
     user_id = db.Column(db.Integer, db.ForeignKey('Users.id'), nullable=False)
     del_flag = db.Column(db.Boolean, default=False)
 

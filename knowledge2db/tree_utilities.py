@@ -126,8 +126,9 @@ def get_entity_table_json(tables):
     for category, table in tables.items():
         for table_name, attributes in table.items():
             if table_name == "base_attributes":
-                results.append({"id": n, "category": category, "table": category + "_info", "number_attribute": len(attributes),
-                                "attribute": attributes})
+                results.append(
+                    {"id": n, "category": category, "table": category + "_info", "number_attribute": len(attributes),
+                     "attribute": attributes})
             else:
                 # otherwise, the attributes shall include those in base_attribute
                 results.append({"id": n, "category": category, "table": table_name,
@@ -149,11 +150,23 @@ def get_relation_table_json(relations):
     return {"total": len(results), "totalNotFiltered": len(results), "rows": results}
 
 
-def _get_attribute_json(index, attr_list, custom_attr_type_dict, comment_list):
+def convert_index_dict_to_attr_index_dict(custom_index):
+    if custom_index is None:
+        custom_index_dict = {}
+    else:
+        custom_index_dict = {}
+        for key in custom_index:
+            for value in custom_index[key]:
+                custom_index_dict[value] = key
+    return custom_index_dict
+
+
+def _get_attribute_json(index, attr_list, custom_attr_type_dict, comment_list, custom_index):
     results = []
     n = index
     if custom_attr_type_dict is None:
         custom_attr_type_dict = {}
+    custom_index_dict = convert_index_dict_to_attr_index_dict(custom_index)
     for attr in attr_list:
         r = {"id": n, "attribute": attr, "disabled": False, "constraint": "", "comment": ""}
         if len(comment_list) != 0 and attr in comment_list.keys():
@@ -173,48 +186,64 @@ def _get_attribute_json(index, attr_list, custom_attr_type_dict, comment_list):
             r["type"] = "VARCHAR(256)"
         else:
             r["type"] = "VARCHAR(32)"
+        # check the index of the attribute
+        if attr in custom_index_dict.keys():
+            r["index"] = custom_index_dict[attr]
+        else:
+            r["index"] = ""
         n += 1
         results.append(r)
     results.append({"id": len(results), "attribute": "create_time", "disabled": True, "comment": "creation time",
-                    "type": "DATETIME", "constraint": "DEFAULT CURRENT_TIMESTAMP"})
+                    "type": "DATETIME", "constraint": "DEFAULT CURRENT_TIMESTAMP", "index": ""})
     results.append({"id": len(results), "attribute": "create_user", "disabled": True, "comment": "creation user",
-                    "type": "VARCHAR(32)", "constraint": "DEFAULT 'system'"})
+                    "type": "VARCHAR(32)", "constraint": "DEFAULT 'system'", "index": ""})
     results.append({"id": len(results), "attribute": "create_app", "disabled": True, "comment": "creation app",
-                    "type": "VARCHAR(32)", "constraint": "DEFAULT 'system'"})
+                    "type": "VARCHAR(32)", "constraint": "DEFAULT 'system'", "index": ""})
     results.append(
         {"id": len(results), "attribute": "modify_time", "disabled": True, "comment": "update time", "type": "DATETIME",
-         "constraint": "DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"})
+         "constraint": "DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP", "index": ""})
     results.append({"id": len(results), "attribute": "modify_user", "disabled": True, "comment": "update user",
-                    "type": "VARCHAR(32)", "constraint": "DEFAULT 'system'"})
+                    "type": "VARCHAR(32)", "constraint": "DEFAULT 'system'", "index": ""})
     results.append({"id": len(results), "attribute": "modify_app", "disabled": True, "comment": "update app",
-                    "type": "VARCHAR(32)", "constraint": "DEFAULT 'system'"})
+                    "type": "VARCHAR(32)", "constraint": "DEFAULT 'system'", "index": ""})
     results.append(
         {"id": len(results), "attribute": "del_stat", "disabled": True, "comment": "delete flag", "type": "INT",
-         "constraint": "DEFAULT 0"})
+         "constraint": "DEFAULT 0", "index": ""})
     results.append(
         {"id": len(results), "attribute": "version_no", "disabled": True, "comment": "version number", "type": "INT",
-         "constraint": "DEFAULT 0"})
+         "constraint": "DEFAULT 0", "index": ""})
     return results
 
 
-def get_entity_table_attribute_json(attr_list, custom_attr_type_dict={}, comment_list={}, table_name="", category=""):
+def get_entity_table_attribute_json(attr_list, custom_attr_type_dict={}, comment_list={}, table_name="", category="",
+                                    custom_index={}):
     results = []
     if table_name[-5:] == "_info":
-        results.append({"id": len(results), "attribute": "id", "disabled": True, "comment": "unique id, PRIMARY KEY", "type": "INT", "constraint": "NOT NULL AUTO_INCREMENT"})
-        results.append({"id": len(results), "attribute": category+"_id", "disabled": True, "comment": "UUID of the entity", "type": "VARCHAR(36)", "constraint": "UNIQUE NOT NULL"})
+        results.append({"id": len(results), "attribute": "id", "disabled": True, "comment": "unique id, PRIMARY KEY",
+                        "type": "INT", "constraint": "NOT NULL AUTO_INCREMENT", "index": ""})
+        results.append(
+            {"id": len(results), "attribute": category + "_id", "disabled": True, "comment": "UUID of the entity",
+             "type": "VARCHAR(36)", "constraint": "UNIQUE NOT NULL", "index": ""})
     else:
-        results.append({"id": len(results), "attribute": category+"_id", "disabled": True, "comment": "unique id, FOREIGN KEY", "type": "INT", "constraint": "NOT NULL"})
-    results += _get_attribute_json(len(results), attr_list, custom_attr_type_dict, comment_list)
+        results.append(
+            {"id": len(results), "attribute": category + "_id", "disabled": True, "comment": "unique id, FOREIGN KEY",
+             "type": "INT", "constraint": "UNIQUE NOT NULL", "index": ""})
+    results += _get_attribute_json(len(results), attr_list, custom_attr_type_dict, comment_list, custom_index)
 
     return {"total": len(results), "totalNotFiltered": len(results), "rows": results}
 
 
-def get_relation_table_attribute_json(attr_list, custom_attr_type_dict={}, comment_list={}, table_name="", category=""):
-    results = [{"id": 0, "attribute": "id", "disabled": True, "comment": "unique id, PRIMARY KEY", "type": "INT", "constraint": "NOT NULL AUTO_INCREMENT"}]
+def get_relation_table_attribute_json(attr_list, custom_attr_type_dict={}, comment_list={}, table_name="", category="",
+                                      custom_index={}):
+    results = [{"id": 0, "attribute": "id", "disabled": True, "comment": "unique id, PRIMARY KEY", "type": "INT",
+                "constraint": "NOT NULL AUTO_INCREMENT", "index": ""}]
     # split the category (like user_region) into two parts (user and region)
     category_list = category.split("_")
     for party in category_list:
-        results.append({"id": len(results), "attribute": party+"_id", "disabled": True, "comment": "UUID, FOREIGN KEY", "type": "VARCHAR(36)", "constraint": "NOT NULL"})
-    results.append({"id": len(results), "attribute": f"{category}_{table_name}_id", "disabled": True, "comment": "UUID of relation", "type": "VARCHAR(36)", "constraint": "UNIQUE NOT NULL"})
-    results += _get_attribute_json(len(results), attr_list, custom_attr_type_dict, comment_list)
+        results.append(
+            {"id": len(results), "attribute": party + "_id", "disabled": True, "comment": "UUID, FOREIGN KEY",
+             "type": "VARCHAR(36)", "constraint": "NOT NULL", "index": ""})
+    results.append({"id": len(results), "attribute": f"{category}_{table_name}_id", "disabled": True,
+                    "comment": "UUID of relation", "type": "VARCHAR(36)", "constraint": "UNIQUE NOT NULL", "index": ""})
+    results += _get_attribute_json(len(results), attr_list, custom_attr_type_dict, comment_list, custom_index)
     return {"total": len(results), "totalNotFiltered": len(results), "rows": results}

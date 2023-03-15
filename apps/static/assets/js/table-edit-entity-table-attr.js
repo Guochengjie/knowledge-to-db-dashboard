@@ -42,6 +42,7 @@ window.operateEvents = {
       	$("#constraints").val(row.constraint);
         $("#attrOld").val(row.attribute);
         $("#attrNew").val(row.attribute);
+        $("#special-constraint").val(row.index);
         changeTableNameModal.show();
     }
 }
@@ -72,6 +73,12 @@ function initTable() {
                 field: 'constraint',
                 title: 'Constraints',
                 sortable: false,
+                align: 'center',
+                class: "text-wrap"
+            }, {
+                field: 'index',
+                title: 'Special Constraint',
+                sortable: true,
                 align: 'center',
                 class: "text-wrap"
             }, {
@@ -127,6 +134,7 @@ $("#modalChangeNameSubmit").click(function () {
             "data_type": $("#dataType").val(),
             "data_type_old": $("#dataTypeOld").val(),
             "constraints": $("#constraints").val(),
+            "special_constraint": $("#special-constraint").val()
         })
         .done(function (data) {
             console.log("data: ", data)

@@ -6,6 +6,7 @@ Copyright (c) 2019 - present AppSeed.us
 import os
 from flask_migrate import Migrate
 from flask_minify import Minify
+
 from sys import exit
 
 from apps.config import config_dict
@@ -27,6 +28,7 @@ except KeyError:
 
 app = create_app(app_config)
 Migrate(app, db)
+
 
 if not DEBUG:
     Minify(app=app, html=True, js=False, cssless=False)

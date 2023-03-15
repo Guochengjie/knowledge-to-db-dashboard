@@ -83,13 +83,13 @@ def elementtree_to_dicttree(tree: ET, type="entity", translate=True, naming=conf
     return t
 
 
-def loader(filename: str, type="entity"):
-    if type not in ["entity", "relation"]:
+def loader(filename: str, file_type="entity"):
+    if file_type not in ["entity", "relation"]:
         raise ValueError("type must be entity or relation")
     tree = opml_loader(filename)
     if config.debug:
         print("tree:", tree)
     if tree:
-        return elementtree_to_dicttree(tree, type, config.translate)
+        return elementtree_to_dicttree(tree, file_type, config.translate)
     else:
         return None

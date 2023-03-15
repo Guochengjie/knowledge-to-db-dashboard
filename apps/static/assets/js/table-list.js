@@ -5,7 +5,7 @@ var selections = []
 
 function getIdSelections() {
     return $.map($table.bootstrapTable('getSelections'), function (row) {
-        return row.id;
+        return row.uuid;
     })
 }
 
@@ -94,31 +94,42 @@ function initTable() {
         'check-all.bs.table uncheck-all.bs.table',
         function () {
             $remove.prop('disabled', !$table.bootstrapTable('getSelections').length)
-
-            // save your data, here just save the current page
             selections = getIdSelections()
             // push or splice the selections if you want to save all data selections
             console.log(selections)
-            var data = $table.bootstrapTable('getData');
-            console.log(data);
-            for (i = 0; i < data.length; i++) {
-                if (selections.indexOf(data[i].id) >= 0 && data[i].table.endsWith("_info")) {
-                    alert('Delete ' + data[i].table + ' will delete all entities under the same category, and relations which include the category cannot be activated.');
-                    $table.bootstrapTable('checkBy', {field: 'category', values: [data[i].category]});
-                }
-            }
         })
     $remove.click(function () {
         var ids = getIdSelections();
-        console.log("to remove: ", ids);
+        $("#deleteConfirmation").empty();
 
-        $table.bootstrapTable('remove', {
-            field: 'id',
-            values: ids
-        })
-        $remove.prop('disabled', true)
+        var delete_table = [];
+        var data = $table.bootstrapTable('getData');
+        console.log(data)
+
+        for (var i = 0; i < ids.length; i++) {
+            delete_table.push(data[i]['uuid']);
+            $("#deleteConfirmation").append("<div class=\"badge bg-info text-wrap m-1\">" + data[i].title + "<br \>&lt;" + data[i].uuid + "&gt;</div>")
+        }
+        var deleteConfirmModal = new bootstrap.Modal(document.getElementById('modalDeleteConfirmation'), {});
+        $("#modalDeleteConfirmation").attr('data-delete-list', delete_table)
+        deleteConfirmModal.show();
     })
 }
+
+
+$("#modalDeleteSubmit").click(function () {
+    var ids = $("#modalDeleteConfirmation").attr("data-delete-list");
+    $.post("/api/task/delete", "uuid_list="+ids)
+        .fail(function () {
+            alert("Error occur");
+        })
+        .done(function (data) {
+            $table.bootstrapTable('refresh');
+            $remove.prop('disabled', true)
+            $("#modalDeleteConfirmation").modal('hide');
+        })
+});
+
 
 window.operateEvents = {
     'click .sql': function (e, value, row, index) {
@@ -141,8 +152,6 @@ window.operateEvents = {
                 }
                 hljs.highlightAll();
                 var sqlModal = new bootstrap.Modal(document.getElementById('modal-sql'), {});
-
-
                 sqlModal.show();
             })
     }

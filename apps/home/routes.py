@@ -28,6 +28,21 @@ def get_task_storage_path(task_uuid):
     return path
 
 
+def del_relation_by_entity_category(task_uuid, category):
+    # delete all the relations that has the entity involved
+    # get the entity table
+    storage_path = get_task_storage_path(task_uuid)
+    with open(os.path.join(storage_path, 'relation_tables.json'), 'r+') as f:
+        relation_dict = json.load(f)
+        for relation_general_category in list(relation_dict.keys()):
+            for relation in list(relation_dict[relation_general_category].keys()):
+                if category in relation:
+                    del relation_dict[relation_general_category][relation]
+        f.seek(0)
+        json.dump(relation_dict, f)
+        f.truncate()
+
+
 @blueprint.route('/index')
 @login_required
 def index():
@@ -71,7 +86,7 @@ def task_add():
             f.write(json.dumps(relations))
         with open(os.path.join(storage_path, 'relation_comments.json'), 'w') as f:
             f.write(json.dumps(relation_comments))
-        return redirect(f'/task/{task_uuid}')
+        return redirect(f'/task')
     return render_template('home/add-task.html', segment='task_add', form=task_from)
 
 
@@ -184,6 +199,7 @@ def prune_tables(type_table, task_uuid):
                 if table['id'] in ids:
                     if table['table'][-5:] == '_info':
                         del entity_dict[table['category']]['base_attributes']
+                        del_relation_by_entity_category(task_uuid, table['category'])
                     else:
                         del entity_dict[table['category']][table['table']]
             f.seek(0)
@@ -348,6 +364,16 @@ def get_table_attr(type_table, task_uuid, category, table):
         custom_attr_type = {}
     else:
         custom_attr_type = custom_attr_type[category][table]
+    if task_obj.custom_index:
+        custom_index = json.loads(task_obj.custom_index)
+    else:
+        custom_index = {}
+    if category not in custom_index.keys():
+        custom_index = {}
+    elif table not in custom_index[category].keys():
+        custom_index = {}
+    else:
+        custom_index = custom_index[category][table]
     if type_table == 'entity':
         with open(os.path.join(storage_path, 'entity_tables.json'), 'r') as f, open(
                 os.path.join(storage_path, 'entity_comments.json'), 'r') as f_comment:
@@ -361,7 +387,7 @@ def get_table_attr(type_table, task_uuid, category, table):
             return knowledge2db.tree_utilities.get_entity_table_attribute_json(entity_dict[category][table],
                                                                                custom_attr_type,
                                                                                entity_comment_dict[category][table],
-                                                                               table_original, category)
+                                                                               table_original, category, custom_index)
     elif type_table == 'relation':
         with open(os.path.join(storage_path, 'relation_tables.json'), 'r') as f, open(
                 os.path.join(storage_path, 'relation_comments.json'), 'r') as f_comment:
@@ -373,7 +399,7 @@ def get_table_attr(type_table, task_uuid, category, table):
                         return render_template('home/page-404.html'), 404
                     return knowledge2db.tree_utilities.get_relation_table_attribute_json(
                         relation_dict[general_category][category][table], custom_attr_type,
-                        relation_comment_dict[general_category][category][table], table, category)
+                        relation_comment_dict[general_category][category][table], table, category, custom_index)
             return render_template('home/page-404.html'), 404
 
 
@@ -455,10 +481,10 @@ def edit_entity_attr(type_table, task_uuid, category, table):
     data_type_new = request.form['data_type']
     data_type_old = request.form['data_type_old']
     constraint_new = request.form['constraints']
+    special_constraint = request.form['special_constraint']
     attr_old = request.form['attr_old']
     attr_new = request.form['attr_new']
     comment = request.form['comment']
-    print(request.data)
     if type_table == 'entity':
         table_original = table
         if table[-5:] == '_info':
@@ -547,6 +573,22 @@ def edit_entity_attr(type_table, task_uuid, category, table):
             custom_attr_type[category][table][attr_new] = data_type_new + ' ' + constraint_new
         task_obj.custom_attr_type = json.dumps(custom_attr_type)
         db.session.commit()
+    if special_constraint != "":
+        special_constraint = special_constraint.upper()
+        try:
+            special_constraint_dict = json.loads(task_obj.custom_index)
+        except TypeError:
+            special_constraint_dict = {}
+        if category not in special_constraint_dict:
+            special_constraint_dict[category] = {}
+        if table not in special_constraint_dict[category]:
+            special_constraint_dict[category][table] = {}
+        if special_constraint not in special_constraint_dict[category][table]:
+            special_constraint_dict[category][table][special_constraint] = [attr_new]
+        else:
+            special_constraint_dict[category][table][special_constraint].append(attr_new)
+        task_obj.custom_index = json.dumps(special_constraint_dict)
+        db.session.commit()
     return {'status': 'success', 'message': 'pruned', 'code': 200}
 
 
@@ -564,6 +606,10 @@ def get_sql_query(task_uuid):
         custom_attr_type = json.loads(task_obj.custom_attr_type)
     except TypeError:
         custom_attr_type = {}
+    try:
+        custom_index_dict = json.loads(task_obj.custom_index)
+    except TypeError:
+        custom_index_dict = {}
     with open(os.path.join(storage_path, 'entity_tables.json'), 'r') as f, open(
             os.path.join(storage_path, 'relation_tables.json'), 'r') as f_relation, open(
         os.path.join(storage_path, 'entity_comments.json'), 'r') as f_comment, open(
@@ -574,10 +620,12 @@ def get_sql_query(task_uuid):
         relation_comment_dict = json.load(f_relation_comment)
         create_tables = ["-- Entity Tables:"]
         create_tables += knowledge2db.sql_generator.create_table_by_category(entity_dict, entity_comment_dict,
-                                                                             custom_column_type=custom_attr_type)
-        create_tables.append("\n-- Relation Tables:")
+                                                                             custom_column_type=custom_attr_type,
+                                                                             custom_index=custom_index_dict)
+        create_tables.append("-- Relation Tables:")
         create_tables += knowledge2db.sql_generator.create_relation_table(relation_dict, relation_comment_dict,
-                                                                          custom_column_type=custom_attr_type)
+                                                                          custom_column_type=custom_attr_type,
+                                                                          custom_index=custom_index_dict)
 
     return {'status': 'success', 'message': create_tables, 'code': 200}
 
@@ -585,7 +633,7 @@ def get_sql_query(task_uuid):
 @blueprint.route('/api/task/list')
 @login_required
 def api_list_task():
-    all_tasks = Task.query.filter_by(user_id=current_user.id).all()
+    all_tasks = Task.query.filter_by(user_id=current_user.id, del_flag=False).all()
     result = {"rows": []}
     for user_task in all_tasks:
         result['rows'].append({
@@ -596,6 +644,23 @@ def api_list_task():
     result['total'] = len(result['rows'])
     result['totalNotFiltered'] = len(result['rows'])
     return result
+
+
+@blueprint.route('/api/task/delete', methods=['POST'])
+@login_required
+def api_delete_task():
+    # delete a list of tasks based on uuid
+    # get the list of uuid from uuid_list then split by comma
+    uuid_list = request.form.get('uuid_list').split(',')
+    for task_uuid in uuid_list:
+        task_obj = Task.query.filter_by(uuid=task_uuid).first()
+        if task_obj is None:
+            return render_template('home/page-404.html'), 404
+        if task_obj.user_id != current_user.id:
+            return render_template('home/page-403.html'), 403
+        task_obj.del_flag = True
+    db.session.commit()
+    return {'status': 'success', 'message': 'deleted', 'code': 200}
 
 
 @blueprint.route('/<template>')
