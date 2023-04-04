@@ -37,7 +37,6 @@
                 {{ form.csrf_token }}
                 <div class="card border-0 shadow components-section">
                     <div class="card-body">
-
                         <div class="row mb-4">
                             <div class="col-lg-6 col-sm-12">
                                 <!-- Form -->
@@ -45,13 +44,14 @@
                                     <label>Title of the task <span class="text-danger">*</span></label>
                                     {{ form.title }}
                                 </div>
-                                <!-- End of Form -->
-                                <!-- Form -->
                                 <div class="mb-3">
                                     <label>Description <span class="text-danger">*</span></label>
                                     {{ form.description }}
                                 </div>
-                                <!-- End of Form -->
+                                <div class="mb-4">
+                                    <label>Table Prefix <span class="text-danger">*</span></label>
+                                    {{ form.table_prefix }}
+                                </div>
                             </div>
                             <div class="col-lg-6 col-sm-12">
                                 <!-- Form -->
@@ -60,8 +60,6 @@
                                             class="text-danger">*</span></label>
                                     {{ form.entity_opml_file }}
                                 </div>
-                                <!-- End of Form -->
-                                <!-- Form -->
                                 <div class="mb-4">
                                     <label>Mindmap for relations and their attributes (OPML only) <span
                                             class="text-danger">*</span></label>
