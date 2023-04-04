@@ -1,0 +1,23 @@
+package com.jd.icity.koala.operation;
+
+import com.jd.icity.koala.domain.vo.{{meta.table|snake_to_capital}}VO;
+
+import java.util.List;
+
+public interface {{meta.table|snake_to_capital}}Operation {
+
+    /**
+     * 通过{{meta.table|snake_to_camel}}Id查询{{meta.table}}
+     * @param {{meta.table|snake_to_camel}}IdList Id list of {{meta.table|snake_to_camel}}
+     * @return List of information queried by {{meta.table|snake_to_camel}}Id
+     */
+    List<{{meta.table|snake_to_capital}}VO> get{{meta.table|snake_to_capital}}VOBy{{meta.table|snake_to_capital}}Id(List<String> {{meta.table|snake_to_camel}}IdList);
+
+    {% for attr in meta.query_attr %}
+    /**
+     * 通过{{attr.attr_name}}查询所有 {{meta.table|snake_to_camel}} 信息
+     * @param {{attr.attr_name|snake_to_camel}} {{attr.attr_name}}
+     * @return List of information queried by {{attr.attr_name|snake_to_camel}}
+     */
+    List<{{meta.table|snake_to_capital}}VO> get{{meta.table|snake_to_capital}}VOListBy{{attr.attr_name|snake_to_capital}}({{attr.attr_java_query_type}} {{attr.attr_name|snake_to_camel}}); {% endfor %}
+}

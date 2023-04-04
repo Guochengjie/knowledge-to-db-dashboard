@@ -1,0 +1,11 @@
+package com.jd.icity.koala.domain.param;
+
+import lombok.Data;
+
+import java.util.List;
+
+@Data
+
+public class Get{{meta.table|snake_to_capital}}Param {
+    List<String> {{meta.table|snake_to_camel}}IdList;
+}

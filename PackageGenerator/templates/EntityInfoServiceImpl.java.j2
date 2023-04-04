@@ -1,0 +1,25 @@
+package com.jd.icity.koala.service.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.jd.icity.koala.dao.{{meta.table|snake_to_capital}}Dao;
+import com.jd.icity.koala.domain.po.{{meta.table|snake_to_capital}}PO;
+import com.jd.icity.koala.service.{{meta.table|snake_to_capital}}Service;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+@Slf4j
+@Service
+public class {{meta.table|snake_to_capital}}ServiceImpl extends ServiceImpl<{{meta.table|snake_to_capital}}Dao, {{meta.table|snake_to_capital}}PO> implements {{meta.table|snake_to_capital}}Service {
+
+    @Override
+    public {{meta.table|snake_to_capital}}PO get{{meta.table|snake_to_capital}}POBy{{meta.category|snake_to_capital}}Id(String {{meta.category|snake_to_camel}}Id) {
+        log.info("{{meta.table|snake_to_capital}}ServiceImpl get{{meta.table|snake_to_capital}}By{{meta.category|snake_to_capital}}Id, {{meta.category|snake_to_camel}}Id:{}", {{meta.category|snake_to_camel}}Id);
+        LambdaQueryWrapper<{{meta.table|snake_to_capital}}PO> queryWrapper = new LambdaQueryWrapper<{{meta.table|snake_to_capital}}PO>()
+                .eq({{meta.table|snake_to_capital}}PO::get{{meta.category|snake_to_capital}}Id, {{meta.category|snake_to_camel}}Id)
+                .eq({{meta.table|snake_to_capital}}PO::getDelStat, 0)
+                ;
+        return getOne(queryWrapper, false);
+    }
+
+}

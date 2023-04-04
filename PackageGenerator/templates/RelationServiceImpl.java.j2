@@ -1,0 +1,133 @@
+package com.jd.icity.koala.service.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.jd.icity.koala.dao.{{meta.table|snake_to_capital}}Dao;
+import com.jd.icity.koala.domain.dto.Insert{{meta.table|snake_to_capital}}DTO;
+import com.jd.icity.koala.domain.param.Update{{meta.table|snake_to_capital}}Param;
+import com.jd.icity.koala.domain.po.{{meta.table|snake_to_capital}}PO;
+{% for party in meta.update_link_entity%}import com.jd.icity.koala.service.{{party|snake_to_capital}}InfoService;{%endfor%}
+import com.jd.icity.koala.service.{{meta.table|snake_to_capital}}Service;
+import com.jd.icity.koala.utils.IDGenerator;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
+import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+@Slf4j
+@Service
+public class {{meta.table|snake_to_capital}}ServiceImpl extends ServiceImpl<{{meta.table|snake_to_capital}}Dao, {{meta.table|snake_to_capital}}PO> implements {{meta.table|snake_to_capital}}Service {
+
+    @Resource
+    private {{meta.table|snake_to_capital}}Dao {{meta.table|snake_to_camel}}Dao;
+    
+    {% for party in meta.update_link_entity%}@Resource
+    private {{party|snake_to_capital}}InfoService {{party|snake_to_camel}}Service;{%endfor%}
+
+    @Override
+    public {{meta.table|snake_to_capital}}PO get{{meta.table|snake_to_capital}}POBy{{meta.table|snake_to_capital}}Id(String {{meta.table|snake_to_camel}}Id) {
+        log.info("{{meta.table|snake_to_capital}}ServiceImpl get{{meta.table|snake_to_capital}}POBy{{meta.table|snake_to_capital}}Id, {{meta.table|snake_to_camel}}Id:{}", {{meta.table|snake_to_camel}}Id);
+        LambdaQueryWrapper<{{meta.table|snake_to_capital}}PO> queryWrapper = new LambdaQueryWrapper<{{meta.table|snake_to_capital}}PO>()
+                .eq({{meta.table|snake_to_capital}}PO::get{{meta.table|snake_to_capital}}Id, {{meta.table|snake_to_camel}}Id)
+                .eq({{meta.table|snake_to_capital}}PO::getDelStat, 0)
+                ;
+
+        return getOne(queryWrapper, false);
+    }
+
+    @Override
+    public void delete{{meta.table|snake_to_capital}}RecordsBy{{meta.table|snake_to_capital}}Id(List<String> {{meta.table|snake_to_camel}}IdList) {
+        log.info("{{meta.table|snake_to_capital}}ServiceImpl delete{{meta.table|snake_to_capital}}RecordsBy{{meta.table|snake_to_capital}}Id, {{meta.table|snake_to_camel}}IdList:{}", {{meta.table|snake_to_camel}}IdList);
+
+        LambdaUpdateWrapper<{{meta.table|snake_to_capital}}PO> updateWrapper = new LambdaUpdateWrapper<{{meta.table|snake_to_capital}}PO>()
+                .in({{meta.table|snake_to_capital}}PO::get{{meta.table|snake_to_capital}}Id, {{meta.table|snake_to_camel}}IdList)
+                .eq({{meta.table|snake_to_capital}}PO::getDelStat, 0)
+                .set({{meta.table|snake_to_capital}}PO::getDelStat, 1)
+                ;
+        update(null, updateWrapper);
+    }
+
+    @Override
+    public List<String> insert{{meta.table|snake_to_capital}}Records(List<Insert{{meta.table|snake_to_capital}}DTO> insert{{meta.table|snake_to_capital}}DTOList) {
+        log.info("{{meta.table|snake_to_capital}}ServiceImpl insert{{meta.table|snake_to_capital}}Records, insert{{meta.table|snake_to_capital}}ParamList:{}", insert{{meta.table|snake_to_capital}}DTOList);
+
+        List<{{meta.table|snake_to_capital}}PO> {{meta.table|snake_to_camel}}POList = new ArrayList<>();
+        List<String> {{meta.table|snake_to_camel}}IdList = new ArrayList<>();
+        for (Insert{{meta.table|snake_to_capital}}DTO item : insert{{meta.table|snake_to_capital}}DTOList){
+            String {{meta.table|snake_to_camel}}Id = IDGenerator.uuid();
+            {{meta.table|snake_to_capital}}PO {{meta.table|snake_to_camel}}PO = new {{meta.table|snake_to_capital}}PO()
+                    .set{{meta.table|snake_to_capital}}Id({{meta.table|snake_to_camel}}Id){% for attr in attrs %}{% if attr.attribute not in ['id', 'create_time', 'create_user', 'create_app', 'modify_time', 'modify_user', 'modify_app', 'del_stat', 'version_no', meta.table+'_id']%}
+                    .set{{attr.attribute|snake_to_capital}}(item.get{{attr.attribute|snake_to_capital}}()){%endif%}{%endfor%}
+                    .setCreateUser(item.getOperatorId())
+                    .setModifyUser(item.getOperatorId())
+                    .setCreateTime(LocalDateTime.now())
+                    .setModifyTime(LocalDateTime.now())
+                    .setDelStat(0)
+                    .setVersionNo(0)
+                    ;
+
+            {{meta.table|snake_to_camel}}POList.add({{meta.table|snake_to_camel}}PO);
+            {{meta.table|snake_to_camel}}IdList.add({{meta.table|snake_to_camel}}Id);
+        }
+
+        if (!CollectionUtils.isEmpty({{meta.table|snake_to_camel}}POList)){
+            log.info("insert {} {{meta.table|snake_to_capital}} record ok!", {{meta.table|snake_to_camel}}POList.size());
+            {{meta.table|snake_to_camel}}Dao.insertBatchSomeColumn({{meta.table|snake_to_camel}}POList);
+        }
+
+        return {{meta.table|snake_to_camel}}IdList;
+    }
+
+    @Override
+    public void update{{meta.table|snake_to_capital}}Record(Update{{meta.table|snake_to_capital}}Param update{{meta.table|snake_to_capital}}Param) {
+        log.info("{{meta.table|snake_to_capital}}ServiceImpl update{{meta.table|snake_to_capital}}Record, update{{meta.table|snake_to_capital}}Param:{}", update{{meta.table|snake_to_capital}}Param);
+
+        {{meta.table|snake_to_capital}}PO existRecordPO = get{{meta.table|snake_to_capital}}POBy{{meta.table|snake_to_capital}}Id(update{{meta.table|snake_to_capital}}Param.get{{meta.table|snake_to_capital}}Id());
+        if (Objects.nonNull(existRecordPO)){
+            {{meta.table|snake_to_capital}}PO {{meta.table|snake_to_camel}}PO = new {{meta.table|snake_to_capital}}PO()
+                    .setId(existRecordPO.getId()){% for party in meta.update_link_entity%}
+                    .set{{party|snake_to_capital}}Id(update{{meta.table|snake_to_capital}}Param.get{{party|snake_to_capital}}Id()){%endfor%}{% for attr in attrs %}{% if attr.attribute not in ['id', 'create_time', 'create_user', 'create_app', 'modify_time', 'modify_user', 'modify_app', 'del_stat', 'version_no', meta.table+'_id'] and attr.attribute not in meta.foreign_key%}
+                    .set{{attr.attribute|snake_to_capital}}(update{{meta.table|snake_to_capital}}Param.get{{attr.attribute|snake_to_capital}}()){%endif%}{%endfor%}
+                    .setModifyUser(update{{meta.table|snake_to_capital}}Param.getOperatorId())
+                    .setDelStat(0)
+                    ;
+            updateById({{meta.table|snake_to_camel}}PO);
+            log.info("update {{meta.table|snake_to_capital}} record ok!");
+        }
+        else {
+            log.warn("cannot find existing record by {{meta.table|snake_to_capital}} id:{}", update{{meta.table|snake_to_capital}}Param.get{{meta.table|snake_to_capital}}Id());
+        }
+
+    }
+
+    {% for attr in meta.query_attr%}
+    @Override
+    public List<{{meta.table|snake_to_capital}}PO> get{{meta.table|snake_to_capital}}POListBy{{attr.attr_name|snake_to_capital}}({{attr.attr_java_query_type}} {{attr.attr_name|snake_to_camel}}) {
+        log.info("{{meta.table|snake_to_capital}}ServiceImpl get{{meta.table|snake_to_capital}}POListBy{{attr.attr_name|snake_to_capital}}, {{attr.attr_name|snake_to_camel}}:{}", {{attr.attr_name|snake_to_camel}});
+
+        LambdaQueryWrapper<{{meta.table|snake_to_capital}}PO> queryWrapper = new LambdaQueryWrapper<{{meta.table|snake_to_capital}}PO>()
+                .eq({{meta.table|snake_to_capital}}PO::get{{attr.attr_name|snake_to_capital}}, {{attr.attr_name|snake_to_camel}})
+                .eq({{meta.table|snake_to_capital}}PO::getDelStat, 0)
+                ;
+
+        return list(queryWrapper);
+    }
+    
+    @Override
+    public void delete{{meta.table|snake_to_capital}}RecordsBy{{attr.attr_name|snake_to_capital}}({{attr.attr_java_query_type}} {{attr.attr_name|snake_to_camel}}) {
+        log.info("{{meta.table|snake_to_capital}}ServiceImpl delete{{attr.attr_name|snake_to_capital}}RecordsBy{{attr.attr_name|snake_to_capital}}, {{attr.attr_name|snake_to_camel}}:{}", {{attr.attr_name|snake_to_camel}});
+
+        LambdaUpdateWrapper<{{meta.table|snake_to_capital}}PO> updateWrapper = new LambdaUpdateWrapper<{{meta.table|snake_to_capital}}PO>()
+                .in({{meta.table|snake_to_capital}}PO::get{{attr.attr_name|snake_to_capital}}, {{attr.attr_name|snake_to_camel}})
+                .eq({{meta.table|snake_to_capital}}PO::getDelStat, 0)
+                .set({{meta.table|snake_to_capital}}PO::getDelStat, 1)
+                ;
+        update(null, updateWrapper);
+    }{%endfor%}
+}

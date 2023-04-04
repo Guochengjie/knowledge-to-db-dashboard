@@ -1,0 +1,36 @@
+package com.jd.icity.koala.operation.impl;
+
+import com.jd.icity.koala.dao.{{meta.table|snake_to_capital}}Dao;
+import com.jd.icity.koala.domain.vo.{{meta.table|snake_to_capital}}VO;
+import com.jd.icity.koala.operation.{{meta.table|snake_to_capital}}Operation;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
+
+import javax.annotation.Resource;
+import java.util.List;
+
+@Component
+@Slf4j
+public class {{meta.table|snake_to_capital}}OperationImpl implements {{meta.table|snake_to_capital}}Operation {
+
+    @Resource
+    private {{meta.table|snake_to_capital}}Dao {{meta.table|snake_to_camel}}Dao;
+
+    @Override
+    public List<{{meta.table|snake_to_capital}}VO> get{{meta.table|snake_to_capital}}VOBy{{meta.table|snake_to_capital}}Id(List<String> {{meta.table|snake_to_camel}}IdList){
+        log.info("{{meta.table|snake_to_capital}}OperationImpl get{{meta.table|snake_to_capital}}VOBy{{meta.table|snake_to_capital}}Id, {{meta.table|snake_to_camel}}IdList:{}", {{meta.table|snake_to_camel}}IdList);
+
+        Assert.isTrue(!CollectionUtils.isEmpty({{meta.table|snake_to_camel}}IdList), "{{meta.table}} id 不能为空");
+        return {{meta.table|snake_to_camel}}Dao.get{{meta.table|snake_to_capital}}VOListBy{{meta.table|snake_to_capital}}IdList({{meta.table|snake_to_camel}}IdList);
+
+    }
+    {% for attr in meta.query_attr %}
+    @Override
+    public List<{{meta.table|snake_to_capital}}VO> get{{meta.table|snake_to_capital}}VOListBy{{attr.attr_name|snake_to_capital}}({{attr.attr_java_query_type}} {{attr.attr_name|snake_to_camel}}){
+        log.info("{{meta.table|snake_to_capital}}OperationImpl get{{meta.table|snake_to_capital}}VOListBy{{attr.attr_name|snake_to_capital}}, {{attr.attr_name|snake_to_camel}}:{}", {{attr.attr_name|snake_to_camel}});
+
+        return {{meta.table|snake_to_camel}}Dao.get{{meta.table|snake_to_capital}}VOListBy{{attr.attr_name|snake_to_capital}}({{attr.attr_name|snake_to_camel}});
+    }{%endfor%}
+}

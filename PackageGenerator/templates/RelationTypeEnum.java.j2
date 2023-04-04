@@ -1,0 +1,35 @@
+package com.jd.icity.koala.common.enums;
+
+import com.google.common.collect.ImmutableMap;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Stream;
+
+@Getter
+@AllArgsConstructor
+public enum {{title|snake_to_capital}}Enum {
+    
+    {% for option in options %}{% set index = loop.index %}{% set name = option|upper|replace('-', '_')|replace(' ', '_') %}{% set label = option|title %}
+    {% if name[0] in ['0', '1', '2', '3', '4', '5', '6','7','8','9'] %}_{%endif%}{{ name }}({{ index }}, "{{ label }}"){{ "," if not loop.last else "" }}{% endfor %}
+    ;
+
+
+    private final Integer code;
+    private final String desc;
+
+    public static {{title|snake_to_capital}}Enum of(Integer value){
+        return Stream.of(values()).filter(o -> Objects.equals(o.getCode(), value)).findAny().orElse(null);
+    }
+
+    public Map<String, Object> toMap() {
+        return ImmutableMap.<String, Object>builder()
+                .put("code", code)
+                .put("desc", desc)
+                .put("children", new ArrayList<>())
+                .build();
+    }
+}

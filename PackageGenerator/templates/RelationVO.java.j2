@@ -1,0 +1,34 @@
+package com.jd.icity.koala.domain.vo;
+
+import lombok.Data;
+import lombok.experimental.Accessors;
+
+@Data
+@Accessors(chain = true)
+public class {{meta.table|snake_to_capital}}VO {
+
+    /**
+     * UUID of {{meta.table|snake_to_capital}}
+     */
+    private String {{meta.table|snake_to_camel}}Id;
+
+    {% for linked_party in meta.update_link_entity %}
+    /**
+     * UUID of {{linked_party}}
+     */
+    private String {{linked_party}}Id;{% endfor %}
+
+    {% for linked_attr in meta.attr_added_when_join_table%}
+    /**
+     * {{linked_attr.attr_name|snake_to_camel}} from {{linked_attr.from_table}}
+     */
+    private {{linked_attr.type|mysql_to_java}} {{linked_attr.attr_name|snake_to_camel}};{% endfor %}
+
+    {% for attr in attrs %}{% if attr.attribute not in ['id', 'create_time', 'create_user', 'create_app', 'modify_time', 'modify_user', 'modify_app', 'del_stat', 'version_no', meta.table+'_id'] and attr.attribute not in meta.foreign_key%}
+    /**
+     * {{attr.comment|remove_quotes}}{% if attr.type|mysql_to_java == 'Integer' and attr.comment and attr.comment !=" " and '1.' in attr.comment%}
+     * {@link com.jd.icity.koala.common.enums.{{attr.attribute|snake_to_capital}}Enum}{% endif %}
+     */
+    private {{attr.type|mysql_to_java}} {{attr.attribute|snake_to_camel}};
+    {% endif %}{% endfor %}
+}

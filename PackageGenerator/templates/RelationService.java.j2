@@ -1,0 +1,49 @@
+package com.jd.icity.koala.service;
+
+import com.jd.icity.koala.domain.dto.Insert{{meta.table|snake_to_capital}}DTO;
+import com.jd.icity.koala.domain.param.Update{{meta.table|snake_to_capital}}Param;
+import com.jd.icity.koala.domain.po.{{meta.table|snake_to_capital}}PO;
+
+import java.util.List;
+
+public interface {{meta.table|snake_to_capital}}Service {
+
+    /**
+     * 通过{{meta.table|snake_to_camel}}Id查询 {{meta.table|snake_to_camel}} 记录
+     * @param {{meta.table|snake_to_camel}}Id {{meta.table|snake_to_camel}}Id
+     * @return Infomation of {{meta.table|snake_to_camel}}
+     */
+    {{meta.table|snake_to_capital}}PO get{{meta.table|snake_to_capital}}POBy{{meta.table|snake_to_capital}}Id(String {{meta.table|snake_to_camel}}Id);
+
+    /**
+     * 批量删除{{meta.table|snake_to_camel}}记录
+     * @param {{meta.table|snake_to_camel}}IdList {{meta.table|snake_to_camel}} UUID列表
+     */
+    void delete{{meta.table|snake_to_capital}}RecordsBy{{meta.table|snake_to_capital}}Id(List<String> {{meta.table|snake_to_camel}}IdList);
+
+    /**
+     * 批量插入{{meta.table|snake_to_camel}}记录
+     * @return 新创建的{{meta.table|snake_to_camel}}记录id列表(UUID)
+     */
+    List<String> insert{{meta.table|snake_to_capital}}Records(List<Insert{{meta.table|snake_to_capital}}DTO> insert{{meta.table|snake_to_capital}}DTOList);
+
+    /**
+     * 更新某个{{meta.table|snake_to_camel}}记录
+     * @param update{{meta.table|snake_to_capital}}Param 更新参数
+     */
+    void update{{meta.table|snake_to_capital}}Record(Update{{meta.table|snake_to_capital}}Param update{{meta.table|snake_to_capital}}Param);
+
+    {% for attr in meta.query_attr%}
+    /**
+     * 查询某个{{attr.attr_name}}的所有{{meta.table|snake_to_camel}}记录
+     * @param {{attr.attr_name|snake_to_camel}} {{attr.attr_name}}
+     * @return {{attr.attr_name}}所有{{meta.table|snake_to_camel}}记录
+     */
+    List<{{meta.table|snake_to_capital}}PO> get{{meta.table|snake_to_capital}}POListBy{{attr.attr_name|snake_to_capital}}({{attr.attr_java_query_type}} {{attr.attr_name|snake_to_camel}});
+
+    /**
+     * 删除某个{{attr.attr_name}}的所有{{meta.table|snake_to_camel}}记录
+     * @param {{attr.attr_name|snake_to_camel}} {{attr.attr_name}}
+     */
+    void delete{{meta.table|snake_to_capital}}RecordsBy{{attr.attr_name|snake_to_capital}}({{attr.attr_java_query_type}} {{attr.attr_name|snake_to_camel}});{%endfor%}
+}

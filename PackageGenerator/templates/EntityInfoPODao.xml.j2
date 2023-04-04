@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jd.icity.koala.dao.{{table.name|snake_to_capital}}Dao">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.jd.icity.koala.domain.po.{{table.name|snake_to_capital}}PO">
+        <id column="id" property="id" />{% for attr in table.fields %}{% if attr.attribute != 'id' %}
+        <result column="{{attr.attribute}}" property="{{attr.attribute|snake_to_camel}}" />{% endif %}{% endfor %}
+    </resultMap>
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        {{ table.column_list | join(', ') }}
+    </sql>
+
+</mapper>
+
+

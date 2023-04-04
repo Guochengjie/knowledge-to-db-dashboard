@@ -1,0 +1,25 @@
+package com.jd.icity.koala.domain.dto;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Data;
+import lombok.experimental.Accessors;
+
+@Data
+@Accessors(chain = true)
+public class Insert{{meta.table|snake_to_capital}}DTO {
+
+    {% for attr in attrs %}{% if attr.attribute not in ['id', 'create_time', 'create_user', 'create_app', 'modify_time', 'modify_user', 'modify_app', 'del_stat', 'version_no', meta.table+'_id']%}
+    /**
+     * {{attr.comment|remove_quotes}}{% if attr.type|mysql_to_java == 'Integer' and attr.comment and attr.comment !=" " and '1.' in attr.comment%}
+     * {@link com.jd.icity.koala.common.enums.{{attr.attribute|snake_to_capital}}Enum}{% endif %}
+     */{% if 'LocalDate' in attr.type|mysql_to_java %}
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy/MM/dd"){% endif%}
+    private {{attr.type|mysql_to_java}} {{attr.attribute|snake_to_camel}};
+    {% endif %}{% endfor %}
+
+    /**
+     * 操作人id
+     */
+    private String operatorId;
+
+}

@@ -1,0 +1,13 @@
+package com.jd.icity.koala.service;
+
+import com.jd.icity.koala.domain.po.{{meta.table|snake_to_capital}}PO;
+
+public interface {{meta.table|snake_to_capital}}Service {
+
+    /**
+     * 通过{{meta.category|snake_to_camel}}Id查询 {{meta.category|snake_to_camel}} 信息
+     * @param {{meta.category|snake_to_camel}}Id {{meta.category|snake_to_camel}} id
+     * @return {{meta.category|snake_to_camel}} Info
+     */
+    {{meta.table|snake_to_capital}}PO get{{meta.table|snake_to_capital}}POBy{{meta.category|snake_to_capital}}Id(String {{meta.category|snake_to_camel}}Id);
+}

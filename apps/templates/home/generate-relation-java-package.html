@@ -1,0 +1,113 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Add a task {% endblock %}
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+    <link rel="stylesheet" type="text/css" href="https://cdn.staticfile.org/select2/4.0.13/css/select2.min.css">
+    <link rel="stylesheet" type="text/css"
+          href="https://cdn.staticfile.org/select2-bootstrap-5-theme/1.3.0/select2-bootstrap-5-theme.min.css">
+
+{% endblock stylesheets %}
+
+{% block content %}
+
+    <div class="py-4">
+        <nav aria-label="breadcrumb" class="d-none d-md-inline-block">
+            <ol class="breadcrumb breadcrumb-dark breadcrumb-transparent">
+                <li class="breadcrumb-item">
+                    <a href="#">
+                        <svg class="icon icon-xxs" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                             xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                        </svg>
+                    </a>
+                </li>
+                <li class="breadcrumb-item"><a href="/task">Task</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Add</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between w-100 flex-wrap">
+            <div class="mb-3 mb-lg-0">
+                <h1 class="h4">Generate Relation Java Package</h1>
+                <p class="mb-0"></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 mb-4">
+            <form action="" method="post" enctype="multipart/form-data">
+                {{ form.csrf_token }}
+                <div class="card border-0 shadow components-section">
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-lg-6 col-sm-12 mb-4">
+                                <label>Database Engine<span class="text-danger"></span></label>
+                                {{ form.db_engine }}
+                            </div>
+                            <div class="col-lg-6 col-sm-12 mb-4">
+                                <label>Database Port <span class="text-danger"></span></label>
+                                {{ form.db_port }}
+                            </div>
+                            <div class="col-lg-6 col-sm-12 mb-4">
+                                <label>Database Host <span class="text-danger"></span></label>
+                                {{ form.db_host }}
+                            </div>
+                            <div class="col-lg-6 col-sm-12 mb-4">
+                                <label>Database Username <span class="text-danger"></span></label>
+                                {{ form.db_username }}
+                            </div>
+                            <div class="col-lg-6 col-sm-12 mb-4">
+                                <label>Database Password <span class="text-danger"></span></label>
+                                {{ form.db_password }}
+                            </div>
+                            <div class="col-lg-6 col-sm-12 mb-4">
+                                <label>Database Name <span class="text-danger"></span></label>
+                                {{ form.db_name }}
+                            </div>
+                            <div class="col-lg-6 col-sm-12 mb-4">
+                                <label>Relation<span class="text-danger"></span></label>
+                                {{ form.relation }}
+                            </div>
+                            <div class="col-lg-6 col-sm-12 mb-4">
+                                <label>Attributes to add when joining tables <span
+                                        class="text-danger"></span></label>
+                                <select class="form-select" id="multiple-select-optgroup-field"
+                                        data-placeholder="Choose attribute to add" multiple data-select2-id="attributes">
+                                    {% for group_label, fields in attributes_dict.items() %}
+                                        <optgroup label="{{ group_label }}">
+                                            {% for field in fields %}
+                                                <option>{{ field }}</option>
+                                            {% endfor %}
+                                        </optgroup>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-lg-6 col-sm-12 mb-4 d-none">
+                                <label>attributes<span class="text-danger"></span></label>
+                                {{ form.attributes }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">Submit</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+    <script src="https://cdn.staticfile.org/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.staticfile.org/select2/4.0.13/js/select2.full.min.js"></script>
+    <script src="/static/assets/js/generate-relation-java-package.js"></script>
+{% endblock javascripts %}

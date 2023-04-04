@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jd.icity.koala.dao.{{meta.table|snake_to_capital}}Dao">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.jd.icity.koala.domain.po.{{meta.table|snake_to_capital}}PO">
+        <id column="id" property="id" />{% for attr in attrs %}{% if attr.attribute != 'id' %}
+        <result column="{{attr.attribute}}" property="{{attr.attribute|snake_to_camel}}" />{% endif %}{% endfor %}
+    </resultMap>
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        {{ meta.column_list | join(', ') }}
+    </sql>
+
+    <select id="get{{meta.table|snake_to_capital}}VOListBy{{meta.table|snake_to_capital}}IdList" resultType="com.jd.icity.koala.domain.vo.{{meta.table|snake_to_capital}}VO">
+        SELECT t0.{{meta.table}}_id {{meta.table|snake_to_camel}}Id, {% for attr_added in meta.attr_added_when_join_table %}{% set index = loop.index %}t{{index}}.{{attr_added.attr_name}} {{attr_added.attr_name|snake_to_camel}},{%endfor%} {% for attr in attrs %}{% if attr.attribute not in ['id', 'create_time', 'create_user', 'create_app', 'modify_time', 'modify_user', 'modify_app', 'del_stat', meta.table+'_id']%}t0.{{attr.attribute}} {{attr.attribute|snake_to_camel}}{{ "," if not loop.last else "" }} {% endif %}{% endfor %}
+        FROM {{meta.db_table_name}} t0{%if meta.attr_added_when_join_table%}{% for attr_added in meta.attr_added_when_join_table %}{% set index = loop.index %}
+            JOIN {{attr_added.from_table}} t{{index}}
+            ON t0.{{attr_added.from_category}}_id=t{{index}}.{{attr_added.from_category}}_id{%endfor%}{%endif%}
+        WHERE t0.del_stat=0{% for attr_added in meta.attr_added_when_join_table %}{% set index = loop.index %} AND t{{index}}.del_stat=0{%endfor%}
+            AND t0.{{meta.table}}_id in
+            <foreach collection="{{meta.table|snake_to_camel}}IdList"  item="{{meta.table|snake_to_camel}}Id" open="(" separator="," close=")">
+                #{{'{'}}{{meta.table|snake_to_camel}}Id{{'}'}}
+            </foreach>
+    </select>
+
+    {% for attr in meta.query_attr%}
+    <select id="get{{meta.table|snake_to_capital}}VOListBy{{attr.attr_name|snake_to_capital}}" resultType="com.jd.icity.koala.domain.vo.{{meta.table|snake_to_capital}}VO">
+        SELECT t0.{{meta.table}}_id {{meta.table|snake_to_camel}}Id, {% for attr_added in meta.attr_added_when_join_table %}{% set index = loop.index %}t{{index}}.{{attr_added.attr_name}} {{attr_added.attr_name|snake_to_camel}},{%endfor%} {% for attr in attrs %}{% if attr.attribute not in ['id', 'create_time', 'create_user', 'create_app', 'modify_time', 'modify_user', 'modify_app', 'del_stat', meta.table+'_id']%}t0.{{attr.attribute}} {{attr.attribute|snake_to_camel}}{{ "," if not loop.last else "" }} {% endif %}{% endfor %}
+        FROM {{meta.db_table_name}} t0{%if meta.attr_added_when_join_table%}{% for attr_added in meta.attr_added_when_join_table %}{% set index = loop.index %}
+            JOIN {{attr_added.from_table}} t{{index}}
+            ON t0.{{attr_added.from_category}}_id=t{{index}}.{{attr_added.from_category}}_id{%endfor%}{%endif%}
+        WHERE t0.del_stat=0{% for attr_added in meta.attr_added_when_join_table %}{% set index = loop.index %} AND t{{index}}.del_stat=0{%endfor%}
+            AND t0.{{attr.attr_name}}=#{{'{'}}{{attr.attr_name|snake_to_camel}}{{'}'}}
+    </select>{%endfor%}
+
+</mapper>
+
+

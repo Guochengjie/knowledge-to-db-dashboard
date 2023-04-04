@@ -1,0 +1,67 @@
+package com.jd.icity.koala.controller;
+
+import com.jd.icity.koala.common.result.HttpStatus;
+import com.jd.icity.koala.common.result.ResponseResult;
+import com.jd.icity.koala.domain.param.Get{{meta.table|snake_to_capital}}Param;
+import com.jd.icity.koala.domain.param.Insert{{meta.table|snake_to_capital}}Param;
+import com.jd.icity.koala.domain.param.Update{{meta.table|snake_to_capital}}Param;
+import com.jd.icity.koala.domain.vo.{{meta.table|snake_to_capital}}VO;
+import com.jd.icity.koala.operation.{{meta.table|snake_to_capital}}Operation;
+import com.jd.icity.koala.service.{{meta.table|snake_to_capital}}Service;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
+import java.util.List;
+
+@RestController
+@RequestMapping("/koala/{{meta.table}}/")
+@Slf4j
+
+public class {{meta.table|snake_to_capital}}Controller {
+
+    @Resource
+    private {{meta.table|snake_to_capital}}Operation {{meta.table|snake_to_camel}}Operation;
+
+    @Resource
+    private {{meta.table|snake_to_capital}}Service {{meta.table|snake_to_camel}}Service;
+
+    @PostMapping("/get{{meta.table|snake_to_capital}}")
+    public ResponseResult<List<{{meta.table|snake_to_capital}}VO>> get{{meta.table|snake_to_capital}}(@RequestBody Get{{meta.table|snake_to_capital}}Param get{{meta.table|snake_to_capital}}Param){
+        log.info("{{meta.table|snake_to_capital}}Controller get{{meta.table|snake_to_capital}}, get{{meta.table|snake_to_capital}}Param:{}", get{{meta.table|snake_to_capital}}Param);
+        return ResponseResult.create(HttpStatus.SC_OK, "success", {{meta.table|snake_to_camel}}Operation.get{{meta.table|snake_to_capital}}VOBy{{meta.table|snake_to_capital}}Id(get{{meta.table|snake_to_capital}}Param.get{{meta.table|snake_to_capital}}IdList()));
+    }
+
+    @PostMapping("/delete{{meta.table|snake_to_capital}}")
+    public ResponseResult<String> delete{{meta.table|snake_to_capital}}(@RequestBody Get{{meta.table|snake_to_capital}}Param get{{meta.table|snake_to_capital}}Param){
+        log.info("{{meta.table|snake_to_capital}}Controller delete{{meta.table|snake_to_capital}}, get{{meta.table|snake_to_capital}}Param:{}", get{{meta.table|snake_to_capital}}Param);
+        {{meta.table|snake_to_camel}}Service.delete{{meta.table|snake_to_capital}}RecordsBy{{meta.table|snake_to_capital}}Id(get{{meta.table|snake_to_capital}}Param.get{{meta.table|snake_to_capital}}IdList());
+        return ResponseResult.create(HttpStatus.SC_OK, "success", "success");
+    }
+
+    @PostMapping("/insert{{meta.table|snake_to_capital}}")
+    public ResponseResult<List<String>> insert{{meta.table|snake_to_capital}}(@RequestBody Insert{{meta.table|snake_to_capital}}Param insert{{meta.table|snake_to_capital}}Param){
+        log.info("{{meta.table|snake_to_capital}}Controller insert{{meta.table|snake_to_capital}}, insert{{meta.table|snake_to_capital}}Param:{}", insert{{meta.table|snake_to_capital}}Param);
+        return ResponseResult.create(HttpStatus.SC_OK, "success", {{meta.table|snake_to_camel}}Service.insert{{meta.table|snake_to_capital}}Records(insert{{meta.table|snake_to_capital}}Param.getInsert{{meta.table|snake_to_capital}}DTOList()));
+    }
+
+    @PostMapping("/update{{meta.table|snake_to_capital}}")
+    public ResponseResult<String> update{{meta.table|snake_to_capital}}(@RequestBody Update{{meta.table|snake_to_capital}}Param update{{meta.table|snake_to_capital}}Param){
+        log.info("{{meta.table|snake_to_capital}}Controller update{{meta.table|snake_to_capital}}, update{{meta.table|snake_to_capital}}Param:{}", update{{meta.table|snake_to_capital}}Param);
+        {{meta.table|snake_to_camel}}Service.update{{meta.table|snake_to_capital}}Record(update{{meta.table|snake_to_capital}}Param);
+        return ResponseResult.create(HttpStatus.SC_OK,  "success", "success");
+    }
+    {% for attr in meta.query_attr %}
+    @GetMapping("/get{{meta.table|snake_to_capital}}By{{attr.attr_name|snake_to_capital}}")
+    public ResponseResult<List<{{meta.table|snake_to_capital}}VO>> get{{meta.table|snake_to_capital}}By{{attr.attr_name|snake_to_capital}}(@RequestParam("{{attr.attr_name|snake_to_camel}}") {{attr.attr_java_query_type}} {{attr.attr_name|snake_to_camel}}){
+        log.info("{{meta.table|snake_to_capital}}Controller get{{meta.table|snake_to_capital}}By{{attr.attr_name|snake_to_capital}}, {{attr.attr_name|snake_to_camel}}:{}", {{attr.attr_name|snake_to_camel}});
+        return ResponseResult.create(HttpStatus.SC_OK,"success", {{meta.table|snake_to_camel}}Operation.get{{meta.table|snake_to_capital}}VOListBy{{attr.attr_name|snake_to_capital}}({{attr.attr_name|snake_to_camel}}));
+    }
+
+    @GetMapping("/delete{{meta.table|snake_to_capital}}By{{attr.attr_name|snake_to_capital}}")
+    public ResponseResult<String> delete{{meta.table|snake_to_capital}}By{{attr.attr_name|snake_to_capital}}(@RequestParam("{{attr.attr_name|snake_to_camel}}") {{attr.attr_java_query_type}} {{attr.attr_name|snake_to_camel}}){
+        log.info("{{meta.table|snake_to_capital}}Controller delete{{meta.table|snake_to_capital}}By{{attr.attr_name|snake_to_capital}}, {{attr.attr_name|snake_to_camel}}:{}", {{attr.attr_name|snake_to_camel}});
+        {{meta.table|snake_to_camel}}Service.delete{{meta.table|snake_to_capital}}RecordsBy{{attr.attr_name|snake_to_capital}}({{attr.attr_name|snake_to_camel}});
+        return ResponseResult.create(HttpStatus.SC_OK, "success");
+    }{% endfor %}
+}
