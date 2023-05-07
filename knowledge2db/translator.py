@@ -109,11 +109,23 @@ def youdao_translate(source, naming="camel"):
         else:
             return [__remove_special(i["translation"]) for i in r["translateResults"]] 
 
+    # add a loop to retry translation if the result is not correct (i.e, the vocab is not loaded)
+    # retry_needed = True
+    # while retry_needed:
     source_lists = __list_splitter(source)
-    target = []
+    target_lang_terms = []
     for source_list in source_lists:
-        target += translate(source_list)
-    return target
+        target_lang_terms += translate(source_list)
+        # if not naming and 'base attributes' not in target_lang_terms:
+        #     retry_needed = True
+        # elif naming == "camel" and 'baseAttributes' not in target_lang_terms:
+        #     retry_needed = True
+        # elif naming == "lower_case_with_underscores" and 'base_attributes' not in target_lang_terms:
+        #     retry_needed = True
+        # else:
+        #     retry_needed = False
+
+    return target_lang_terms
 
 
 if __name__ == "__main__":

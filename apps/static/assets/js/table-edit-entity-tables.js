@@ -163,6 +163,8 @@ $("#modalDeleteSubmit").click(function () {
         .done(function () {
             $remove.prop('disabled', true)
             $table.bootstrapTable('refresh')
+            // remove selected
+            $table.bootstrapTable('uncheckAll')
             $("#modalDeleteConfirmation").modal('hide');
         })
 })

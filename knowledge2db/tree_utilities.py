@@ -1,6 +1,5 @@
 import re
 
-
 # remove nodes higher than "level"
 def prune_tree(tree, level):
     if level == 0:

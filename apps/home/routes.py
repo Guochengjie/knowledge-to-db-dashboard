@@ -5,12 +5,13 @@ Copyright (c) 2019 - present AppSeed.us
 """
 
 from apps.home import blueprint
-from flask import render_template, request, redirect, abort
+from flask import render_template, request, redirect, abort, send_file
 from flask_login import login_required, current_user
 from jinja2 import TemplateNotFound
-from apps.home.forms import TaskForm
+from apps.home.forms import TaskForm, JavaRelationPackageFrom
 from apps.home.models import Task
 from apps import db
+from PackageGenerator import generate_java_package
 import knowledge2db
 import json
 import sqlalchemy
@@ -43,6 +44,86 @@ def del_relation_by_entity_category(task_uuid, category):
         f.truncate()
 
 
+def _verify_uuid_type_table(task_uuid, type_table):
+    task_obj = Task.query.filter_by(uuid=task_uuid).first()
+    if task_obj is None:
+        return render_template('home/page-404.html'), 404
+    if task_obj.user_id != current_user.id:
+        return render_template('home/page-403.html'), 403
+    # check if type_table in ['entity', 'relation'], otherwise return 404
+    if type_table not in ['entity', 'relation']:
+        return render_template('home/page-404.html'), 404
+    return task_obj, 200
+
+
+def _get_table_attr(type_table, task_uuid, category, table):
+    task_obj = Task.query.filter_by(uuid=task_uuid).first()
+    table_original = table
+    storage_path = get_task_storage_path(task_uuid)
+    # check if type_table in ['entity', 'relation'], otherwise return 404
+    if type_table not in ['entity', 'relation']:
+        return render_template('home/page-404.html'), 404
+    # check if the table with category and table name exists, otherwise return 404
+    if type_table == 'entity' and table[-5:] == '_info':
+        table = 'base_attributes'
+    if task_obj.custom_attr_type:
+        custom_attr_type = json.loads(task_obj.custom_attr_type)
+    else:
+        custom_attr_type = {}
+    if category not in custom_attr_type.keys():
+        custom_attr_type = {}
+    elif table not in custom_attr_type[category].keys():
+        custom_attr_type = {}
+    else:
+        custom_attr_type = custom_attr_type[category][table]
+    if task_obj.custom_index:
+        custom_index = json.loads(task_obj.custom_index)
+    else:
+        custom_index = {}
+    if category not in custom_index.keys():
+        custom_index = {}
+    elif table not in custom_index[category].keys():
+        custom_index = {}
+    else:
+        custom_index = custom_index[category][table]
+    if type_table == 'entity':
+        with open(os.path.join(storage_path, 'entity_tables.json'), 'r') as f, open(
+                os.path.join(storage_path, 'entity_comments.json'), 'r') as f_comment:
+            entity_dict = json.load(f)
+            entity_comment_dict = json.load(f_comment)
+            if category not in entity_dict:
+                return render_template('home/page-404.html'), 404
+            if table not in entity_dict[category]:
+                return render_template('home/page-404.html'), 404
+
+            return knowledge2db.tree_utilities.get_entity_table_attribute_json(entity_dict[category][table],
+                                                                               custom_attr_type,
+                                                                               entity_comment_dict[category][table],
+                                                                               table_original, category,
+                                                                               custom_index), 200
+    elif type_table == 'relation':
+        with open(os.path.join(storage_path, 'relation_tables.json'), 'r') as f, open(
+                os.path.join(storage_path, 'relation_comments.json'), 'r') as f_comment:
+            relation_dict = json.load(f)
+            relation_comment_dict = json.load(f_comment)
+            for general_category in relation_dict:
+                if category in relation_dict[general_category]:
+                    if table not in relation_dict[general_category][category]:
+                        return render_template('home/page-404.html'), 404
+                    return knowledge2db.tree_utilities.get_relation_table_attribute_json(
+                        relation_dict[general_category][category][table], custom_attr_type,
+                        relation_comment_dict[general_category][category][table], table, category, custom_index), 200
+            return render_template('home/page-404.html'), 404
+
+
+def _get_attr_type_from_entity_info_table(task_uuid, category, attr):
+    attr_json, _ = _get_table_attr('entity', task_uuid, category, category + '_info')
+    for row in attr_json['rows']:
+        if row['attribute'] == attr:
+            return row['type']
+    return None
+
+
 @blueprint.route('/index')
 @login_required
 def index():
@@ -57,7 +138,7 @@ def task_add():
         # save files to disk
         task_uuid = str(uuid.uuid4())
         new_task = Task(title=task_from.title.data, description=task_from.description.data, task_uuid=task_uuid,
-                        user_id=current_user.id)
+                        user_id=current_user.id, table_prefix=task_from.table_prefix.data)
         db.session.add(new_task)
         db.session.commit()
         # store the file in the upload folder relative to root of the project
@@ -278,15 +359,10 @@ def rename_table(type_table, task_uuid):
 @blueprint.route('/task/tables/<type_table>/<task_uuid>/edit/<category>/<table>')
 @login_required
 def edit_table(type_table, task_uuid, category, table):
-    task_obj = Task.query.filter_by(uuid=task_uuid).first()
-    if task_obj is None:
-        return render_template('home/page-404.html'), 404
-    if task_obj.user_id != current_user.id:
-        return render_template('home/page-403.html'), 403
+    task_obj, code = _verify_uuid_type_table(task_uuid, type_table)
+    if code != 200:
+        return task_obj
     storage_path = get_task_storage_path(task_uuid)
-    # check if type_table in ['entity', 'relation'], otherwise return 404
-    if type_table not in ['entity', 'relation']:
-        return render_template('home/page-404.html'), 404
     # check if the table with category and table name exists, otherwise return 404
     if type_table == 'entity':
         table_original = table
@@ -317,19 +393,136 @@ def edit_table(type_table, task_uuid, category, table):
                                category=category, table=table)
 
 
+@blueprint.route('/task/java/<type_table>/<task_uuid>', methods=['get', 'post'])
+@login_required
+def generate_java_package_zip(type_table, task_uuid):
+    task_obj, code = _verify_uuid_type_table(task_uuid, type_table)
+    if code != 200:
+        return task_obj
+    form = JavaRelationPackageFrom()
+    storage_path = get_task_storage_path(task_uuid)
+    if request.method == 'POST' and form.validate_on_submit():
+        if type_table == "relation":
+            relation = form.relation.data
+            attributes = form.attributes.data.split('|')
+            config_dict = {
+                'config': {
+                    'db_engine': form.db_engine.data,
+                    'db_port': int(form.db_port.data),
+                    'db_server': form.db_host.data,
+                    'db_username': form.db_username.data,
+                    'db_password': form.db_password.data,
+                    'db_name': form.db_name.data
+                }
+            }
+            table_name = "_".join(relation.split(' / '))
+            config_dict['relation'] = [{
+                'table': table_name,
+                'attribute_list': os.path.join(storage_path, table_name + '_attribute_list.json'),
+                'db_table_name': task_obj.table_prefix + 'rel_' + table_name,
+                'parties': relation.split(' / ')[0].split('_'),
+                'foreign_key': [party + '_id' for party in relation.split(' / ')[0].split('_')],
+                'attr_added_when_join_table': [
+                    {
+                        'attr_name': attribute_add.split(' / ')[1],
+                        'from_table': task_obj.table_prefix + attribute_add.split(' / ')[0] + '_info',
+                        'from_category': attribute_add.split(' / ')[0],
+                        'type': _get_attr_type_from_entity_info_table(task_uuid, attribute_add.split(' / ')[0],
+                                                                      attribute_add.split(' / ')[1])
+                    } for attribute_add in attributes if attribute_add != ''
+                ],
+                'update_link_entity': [attribute_add.split(' / ')[0] for attribute_add in attributes if
+                                       attribute_add != '']
+            }]
+            config_dict['entity'] = [
+                {
+                    'table': f'{party}_info',
+                    'attribute_list': os.path.join(storage_path, f'{party}_info_attribute_list.json'),
+                    'db_table_name': f"t_{party}_info",
+                    'category': party
+                } for party in relation.split(' / ')[0].split('_')
+            ]
+            # now, the most difficult part, we need to get indexed attributes
+            try:
+                custom_index_dict = json.loads(task_obj.custom_index)
+                custom_type_dict = json.loads(task_obj.custom_attr_type)
+            except TypeError:
+                custom_index_dict = {}
+                custom_type_dict = {}
+            try:
+                custom_index_dict = custom_index_dict[relation.split(' / ')[0]][relation.split(' / ')[1]]
+                custom_indexed_attr = []
+                custom_indexed_attr_list = []
+                for index_list in custom_index_dict.values():
+                    custom_indexed_attr.extend(index_list)
+                custom_type_dict = custom_type_dict[relation.split(' / ')[0]][relation.split(' / ')[1]]
+                for attr in custom_indexed_attr:
+                    if attr in custom_type_dict.keys():
+                        if custom_type_dict[attr].upper() == 'INT':
+                            custom_indexed_attr_list.append({'attr_name': attr, 'attr_java_query_type': 'Integer'})
+                        else:
+                            custom_indexed_attr_list.append({'attr_name': attr, 'attr_java_query_type': 'String'})
+                    else:
+                        custom_indexed_attr_list.append({'attr_name': attr, 'attr_java_query_type': 'String'})
+            except KeyError:
+                custom_indexed_attr_list = []
+            custom_indexed_attr_list += [{'attr_name': party + '_id', 'attr_java_query_type': 'String'} for party in
+                                         relation.split(' / ')[0].split('_')]
+            config_dict['relation'][0]['query_attr'] = custom_indexed_attr_list
+            # now store the required json file to the storage path
+            # entity json
+            for party in relation.split(' / ')[0].split('_'):
+                data, _ = _get_table_attr('entity', task_uuid, party, 'base_attributes')
+                # write to os.path.join(storage_path, f'{party}_info_attribute_list.json')
+                with open(os.path.join(storage_path, f'{party}_info_attribute_list.json'), 'w') as f:
+                    json.dump(data, f)
+            # relation json
+            with open(os.path.join(storage_path, table_name + '_attribute_list.json'), 'w') as f:
+                relation_data, _ = _get_table_attr('relation', task_uuid, relation.split(' / ')[0],
+                                                   relation.split(' / ')[1])
+                json.dump(relation_data, f)
+
+            print(config_dict)
+            zip_file_path = generate_java_package(config_dict, storage_path + '/java_package')
+            # try to find the zip file and send it to the user
+            if os.path.exists(zip_file_path):
+                return send_file(zip_file_path, as_attachment=True)
+            return abort(500, 'Failed to generate the java package')
+
+    else:
+        if type_table == "relation":
+            # get the attributes of the task from entity_tables.json
+            with open(os.path.join(storage_path, 'entity_tables.json'), 'r') as f:
+                relation_dict = json.load(f)
+                # get the base attributes of each category and store them in a dict
+                attributes_dict = {}
+                for category in relation_dict.keys():
+                    if 'base_attributes' in relation_dict[category].keys():
+                        attributes_dict[category] = [f"{category} / {attr}" for attr in
+                                                     relation_dict[category]['base_attributes']]
+            # open relation tables to get a list of available relations
+            with open(os.path.join(storage_path, 'relation_tables.json'), 'r') as f:
+                relation_dict = json.load(f)
+                relations = []
+                for general_category in relation_dict.keys():
+                    for category in relation_dict[general_category].keys():
+                        for relation in relation_dict[general_category][category].keys():
+                            relations.append(f"{category} / {relation}")
+            # add relations to form.relation field
+            form.relation.choices = [(relation, relation) for relation in relations]
+            return render_template("home/generate-relation-java-package.html", form=form,
+                                   attributes_dict=attributes_dict)
+        elif type_table == 'entity':
+            return render_template('home/page-403.html'), 403
+
+
 # page to edit tables of a task
 @blueprint.route('/task/tables/<type_table>/<task_uuid>')
 @login_required
 def edit_tables(type_table, task_uuid):
-    task_obj = Task.query.filter_by(uuid=task_uuid).first()
-    if task_obj is None:
-        return render_template('home/page-404.html'), 404
-    if task_obj.user_id != current_user.id:
-        return render_template('home/page-403.html'), 403
-    storage_path = get_task_storage_path(task_uuid)
-    # check if type_table in ['entity', 'relation'], otherwise return 404
-    if type_table not in ['entity', 'relation']:
-        return render_template('home/page-404.html'), 404
+    task_obj, code = _verify_uuid_type_table(task_uuid, type_table)
+    if code != 200:
+        return task_obj
     if type_table == 'entity':
         return render_template('home/task-edit-entity-tables.html', task_uuid=task_uuid,
                                segment='task_edit_entity_tables')
@@ -342,65 +535,11 @@ def edit_tables(type_table, task_uuid):
 @login_required
 def get_table_attr(type_table, task_uuid, category, table):
     task_obj = Task.query.filter_by(uuid=task_uuid).first()
-    table_original = table
     if task_obj is None:
         return render_template('home/page-404.html'), 404
     if task_obj.user_id != current_user.id:
         return render_template('home/page-403.html'), 403
-    storage_path = get_task_storage_path(task_uuid)
-    # check if type_table in ['entity', 'relation'], otherwise return 404
-    if type_table not in ['entity', 'relation']:
-        return render_template('home/page-404.html'), 404
-    # check if the table with category and table name exists, otherwise return 404
-    if type_table == 'entity' and table[-5:] == '_info':
-        table = 'base_attributes'
-    if task_obj.custom_attr_type:
-        custom_attr_type = json.loads(task_obj.custom_attr_type)
-    else:
-        custom_attr_type = {}
-    if category not in custom_attr_type.keys():
-        custom_attr_type = {}
-    elif table not in custom_attr_type[category].keys():
-        custom_attr_type = {}
-    else:
-        custom_attr_type = custom_attr_type[category][table]
-    if task_obj.custom_index:
-        custom_index = json.loads(task_obj.custom_index)
-    else:
-        custom_index = {}
-    if category not in custom_index.keys():
-        custom_index = {}
-    elif table not in custom_index[category].keys():
-        custom_index = {}
-    else:
-        custom_index = custom_index[category][table]
-    if type_table == 'entity':
-        with open(os.path.join(storage_path, 'entity_tables.json'), 'r') as f, open(
-                os.path.join(storage_path, 'entity_comments.json'), 'r') as f_comment:
-            entity_dict = json.load(f)
-            entity_comment_dict = json.load(f_comment)
-            if category not in entity_dict:
-                return render_template('home/page-404.html'), 404
-            if table not in entity_dict[category]:
-                return render_template('home/page-404.html'), 404
-
-            return knowledge2db.tree_utilities.get_entity_table_attribute_json(entity_dict[category][table],
-                                                                               custom_attr_type,
-                                                                               entity_comment_dict[category][table],
-                                                                               table_original, category, custom_index)
-    elif type_table == 'relation':
-        with open(os.path.join(storage_path, 'relation_tables.json'), 'r') as f, open(
-                os.path.join(storage_path, 'relation_comments.json'), 'r') as f_comment:
-            relation_dict = json.load(f)
-            relation_comment_dict = json.load(f_comment)
-            for general_category in relation_dict:
-                if category in relation_dict[general_category]:
-                    if table not in relation_dict[general_category][category]:
-                        return render_template('home/page-404.html'), 404
-                    return knowledge2db.tree_utilities.get_relation_table_attribute_json(
-                        relation_dict[general_category][category][table], custom_attr_type,
-                        relation_comment_dict[general_category][category][table], table, category, custom_index)
-            return render_template('home/page-404.html'), 404
+    return _get_table_attr(type_table, task_uuid, category, table)
 
 
 @blueprint.route('/api/task/attributes/<type_table>/<task_uuid>/<category>/<table>/prune', methods=['post'])
@@ -467,6 +606,16 @@ def prune_entity_attr(type_table, task_uuid, category, table):
             f_comment.seek(0)
             json.dump(relation_comment_dict, f_comment)
             f_comment.truncate()
+            # try to remove it from custom_index
+            try:
+                custom_index_dict = json.loads(task_obj.custom_index)
+                for index_type, index_list in custom_index_dict[category][table].items():
+                    if attr in index_list:
+                        index_list.remove(attr)
+                task_obj.custom_index = json.dumps(custom_index_dict)
+                db.session.commit()
+            except KeyError or TypeError:
+                pass
         return {'status': 'success', 'message': 'pruned', 'code': 200}
 
 
@@ -575,9 +724,9 @@ def edit_entity_attr(type_table, task_uuid, category, table):
         db.session.commit()
     if special_constraint != "":
         special_constraint = special_constraint.upper()
-        try:
+        if task_obj.custom_index:
             special_constraint_dict = json.loads(task_obj.custom_index)
-        except TypeError:
+        else:
             special_constraint_dict = {}
         if category not in special_constraint_dict:
             special_constraint_dict[category] = {}
@@ -610,6 +759,10 @@ def get_sql_query(task_uuid):
         custom_index_dict = json.loads(task_obj.custom_index)
     except TypeError:
         custom_index_dict = {}
+    if not task_obj.table_prefix:
+        table_prefix = "t_"
+    else:
+        table_prefix = task_obj.table_prefix
     with open(os.path.join(storage_path, 'entity_tables.json'), 'r') as f, open(
             os.path.join(storage_path, 'relation_tables.json'), 'r') as f_relation, open(
         os.path.join(storage_path, 'entity_comments.json'), 'r') as f_comment, open(
@@ -621,11 +774,13 @@ def get_sql_query(task_uuid):
         create_tables = ["-- Entity Tables:"]
         create_tables += knowledge2db.sql_generator.create_table_by_category(entity_dict, entity_comment_dict,
                                                                              custom_column_type=custom_attr_type,
-                                                                             custom_index=custom_index_dict)
+                                                                             custom_index=custom_index_dict,
+                                                                             table_prefix=table_prefix)
         create_tables.append("-- Relation Tables:")
         create_tables += knowledge2db.sql_generator.create_relation_table(relation_dict, relation_comment_dict,
                                                                           custom_column_type=custom_attr_type,
-                                                                          custom_index=custom_index_dict)
+                                                                          custom_index=custom_index_dict,
+                                                                          table_prefix=table_prefix)
 
     return {'status': 'success', 'message': create_tables, 'code': 200}
 

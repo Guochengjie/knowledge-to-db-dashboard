@@ -7,9 +7,11 @@ class Task(db.Model):
     uuid = db.Column(db.String(36), unique=True)
     title = db.Column(db.String(100), nullable=False)
     description = db.Column(db.String(250))
+    db_engine = db.Column(db.String(20))
     db_username = db.Column(db.String(30))
     db_password = db.Column(db.String(30))
     db_host = db.Column(db.String(30))
+    db_port = db.Column(db.SMALLINT())
     db_name = db.Column(db.String(30))
     table_prefix = db.Column(db.String(10))
     custom_attr_type = db.Column(db.Text)
@@ -20,8 +22,9 @@ class Task(db.Model):
     def __repr__(self):
         return '<Task %r>' % self.id
 
-    def __init__(self, title, description, task_uuid, user_id):
+    def __init__(self, title, description, task_uuid, user_id, table_prefix="t_"):
         self.uuid = task_uuid
         self.description = description
         self.title = title
         self.user_id = user_id
+        self.table_prefix = table_prefix

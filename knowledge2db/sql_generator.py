@@ -8,14 +8,14 @@ def _generate_attr_col_sql(attribute, comment_str, custom_column_type={}):
     # if date in attribute.lower(), use DATE
     # if time in attribute.lower(), use DATETIME
     # if place or location or address in attribute.lower(), use VARCHAR(256)
-    if "date" in attribute.lower():
+    if attribute.lower() in custom_column_type.keys():
+        return f"`{attribute}` {custom_column_type[attribute.lower()]} {comment_str}, \n"
+    elif "date" in attribute.lower():
         return f"`{attribute}` DATE {comment_str}, \n"
     elif "time" in attribute.lower():
         return f"`{attribute}` DATETIME {comment_str}, \n"
     elif "place" in attribute.lower() or "location" in attribute.lower() or "address" in attribute.lower():
         return f"`{attribute}` VARCHAR(256) {comment_str}, \n"
-    elif attribute.lower() in custom_column_type.keys():
-        return f"`{attribute}` {custom_column_type[attribute.lower()]} {comment_str}, \n"
     else:
         return f"`{attribute}` VARCHAR(32) {comment_str}, \n"
 
@@ -222,7 +222,7 @@ def create_relation_table(tables_dict, comments_dict, table_prefix=config.table_
                         custom_column_type_dict = custom_column_type[category][table]
                     except KeyError:
                         custom_column_type_dict = {}
-                    sql += _generate_attr_col_sql(attribute, comment_str, custom_column_type)
+                    sql += _generate_attr_col_sql(attribute, comment_str, custom_column_type_dict)
                 sql += (f"{category.lower()}_{table.lower()}_id VARCHAR(36) UNIQUE NOT NULL, \n"
                         "create_time DATETIME DEFAULT CURRENT_TIMESTAMP, \n"
                         "create_user VARCHAR(32) DEFAULT 'system', \n"

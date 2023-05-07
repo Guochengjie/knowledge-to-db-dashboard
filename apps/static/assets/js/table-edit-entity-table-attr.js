@@ -17,15 +17,15 @@ function responseHandler(res) {
 
 function stateFormatter(value, row, index) {
     if (row.disabled === true) {
-      return {
-        disabled: true
-      }
+        return {
+            disabled: true
+        }
     }
     return value
 }
 
 function operateFormatter(value, row, index) {
-  	if (row.disabled) return ""
+    if (row.disabled) return ""
     return [
         '<a class="edit" href="javascript:void(0)" title="Edit Table Name">',
         '<i class="fa fa-edit"></i>',
@@ -37,9 +37,9 @@ window.operateEvents = {
     'click .edit': function (e, value, row, index) {
         var changeTableNameModal = new bootstrap.Modal(document.getElementById('modalChangeName'), {});
         $("#comment").val(row.comment);
-      	$("#dataType").val(row.type);
+        $("#dataType").val(row.type);
         $("#dataTypeOld").val(row.type);
-      	$("#constraints").val(row.constraint);
+        $("#constraints").val(row.constraint);
         $("#attrOld").val(row.attribute);
         $("#attrNew").val(row.attribute);
         $("#special-constraint").val(row.index);
@@ -56,7 +56,7 @@ function initTable() {
                 checkbox: true,
                 align: 'center',
                 valign: 'middle',
-              	formatter: stateFormatter
+                formatter: stateFormatter
             }, {
                 title: 'Attribute',
                 field: 'attribute',
@@ -106,17 +106,17 @@ function initTable() {
     $remove.click(function () {
         var ids = getIdSelections();
 
-      	var delete_table = [];
+        var delete_table = [];
 
-      	var data = $table.bootstrapTable('getData');
-      	$("#deleteConfirmation").empty();
+        var data = $table.bootstrapTable('getData');
+        $("#deleteConfirmation").empty();
 
-      	for (var i = 0; i < ids.length; i++) {
-              delete_table.push(data[ids[i]].attribute);
-          $("#deleteConfirmation").append("<div class=\"badge bg-info text-wrap m-1\">"+data[ids[i]].attribute+"["+data[ids[i]].type+"]</div>")
+        for (var i = 0; i < ids.length; i++) {
+            delete_table.push(data[ids[i]].attribute);
+            $("#deleteConfirmation").append("<div class=\"badge bg-info text-wrap m-1\">" + data[ids[i]].attribute + "[" + data[ids[i]].type + "]</div>")
         }
- 				var deleteConfirmModal = new bootstrap.Modal(document.getElementById('modalDeleteConfirmation'), {});
-      	$("#modalDeleteConfirmation").attr('data-delete-list', delete_table)
+        var deleteConfirmModal = new bootstrap.Modal(document.getElementById('modalDeleteConfirmation'), {});
+        $("#modalDeleteConfirmation").attr('data-delete-list', delete_table)
         deleteConfirmModal.show();
     })
 }
@@ -126,7 +126,7 @@ $(function () {
 })
 
 $("#modalChangeNameSubmit").click(function () {
-    var p = $.post("/api/task/attributes/" + $table.attr("data-table-type") + "/" + $table.attr("data-table-uuid") +"/" + $table.attr("data-table-category") + "/" + $table.attr("data-table-name") + "/edit",
+    var p = $.post("/api/task/attributes/" + $table.attr("data-table-type") + "/" + $table.attr("data-table-uuid") + "/" + $table.attr("data-table-category") + "/" + $table.attr("data-table-name") + "/edit",
         {
             "attr_old": $("#attrOld").val(),
             "attr_new": $("#attrNew").val(),
@@ -140,6 +140,8 @@ $("#modalChangeNameSubmit").click(function () {
             console.log("data: ", data)
             console.log("table: ", $("#tableNew").val())
             $table.bootstrapTable('refresh')
+            $table.bootstrapTable('uncheckAll')
+
         })
         .fail(function () {
             alert("Error occur when updating table name");
@@ -150,17 +152,17 @@ $("#modalChangeNameSubmit").click(function () {
 });
 
 $("#modalDeleteSubmit").click(function () {
-  var ids = $("#modalDeleteConfirmation").attr("data-delete-list");
+    var ids = $("#modalDeleteConfirmation").attr("data-delete-list");
 
-  $.post("/api/task/attributes/" + $table.attr("data-table-type") + "/" + $table.attr("data-table-uuid") +"/" + $table.attr("data-table-category") + "/" + $table.attr("data-table-name") + "/prune", "attrs="+ids)
-    .fail(function () {
-    	alert("Error occur when pruning tables");
-  	})
-    .done(function () {
-        $table.bootstrapTable('refresh');
-      $remove.prop('disabled', true)
-    	$("#modalDeleteConfirmation").modal('hide');
-    })
+    $.post("/api/task/attributes/" + $table.attr("data-table-type") + "/" + $table.attr("data-table-uuid") + "/" + $table.attr("data-table-category") + "/" + $table.attr("data-table-name") + "/prune", "attrs=" + ids)
+        .fail(function () {
+            alert("Error occur when pruning tables");
+        })
+        .done(function () {
+            $table.bootstrapTable('refresh');
+            $remove.prop('disabled', true)
+            $("#modalDeleteConfirmation").modal('hide');
+        })
 })
 
 $("button.type-btn.badge.bg-info").click(function () {

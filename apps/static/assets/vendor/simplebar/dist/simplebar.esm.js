@@ -983,7 +983,7 @@ SimpleBar.handleMutations = function (mutations) {
 SimpleBar.getOptions = getOptions;
 /**
  * HTML API
- * Called only in a browser env.
+ * Called only in a browser env.sample.
  */
 
 if (canUseDOM) {

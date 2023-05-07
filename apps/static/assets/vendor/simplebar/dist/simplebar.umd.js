@@ -115,7 +115,7 @@
   SimpleBar.default = SimpleBar;
   /**
    * HTML API
-   * Called only in a browser env.
+   * Called only in a browser env.sample.
    */
 
   if (canUseDOM) {

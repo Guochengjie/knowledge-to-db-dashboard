@@ -1,3 +1,5 @@
+import json
+
 from knowledge2db import config, tree_utilities, translator
 from knowledge2db.tree_utilities import prune_tree, collapse_tree
 import xml.etree.ElementTree as ET
@@ -64,6 +66,25 @@ def elementtree_to_dicttree(tree: ET, type="entity", translate=True, naming=conf
         translation_result_list = translator(translation_source_list, naming)
         translation_dict = dict(zip(translation_source_list, translation_result_list))
         translation_dict[""] = ""
+        # translation_reverse_dict = dict(zip(translation_result_list, translation_source_list))
+        # translation_reverse_dict[""] = ""
+        #
+        # # write to json
+        # with open("translation_dict.json", "r+") as f:
+        #     # read then join then write
+        #     old_dict = json.load(f)
+        #     old_dict.update(translation_dict)
+        #     f.seek(0)
+        #     json.dump(old_dict, f)
+        #
+        # with open("translation_reverse_dict.json", "r+") as f:
+        #     # read then join then write
+        #     old_dict = json.load(f)
+        #     old_dict.update(translation_reverse_dict)
+        #     f.seek(0)
+        #     json.dump(old_dict, f)
+
+
 
         def translate_tree(t):
             t["name"] = translation_dict[t["name"]]

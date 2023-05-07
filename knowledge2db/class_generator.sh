@@ -1,0 +1,1 @@
+sqlacodegen mysql+pymysql://urban_knowledge:n2SEZFJpmSxGmC4j@42.193.131.65/urban_knowledge --outfile urban_knowledge.py
